@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Departmental Clash Bowling</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+[hidden]{display:none!important}
+/* Palette from the GSA flyer: navy, gold, light blue. Compete = navy, Relax = gold, red is only for errors. */
+:root{
+  --bg:#eaf1fb; --surface:#ffffff; --ink:#0b2a5b; --muted:#53617c; --line:#c9d7ec;
+  --pin:#0b2a5b; --pin-ink:#ffffff; --maple:#f2b705; --maple-ink:#2b2100; --ok:#1f7a54; --warn:#9a5b00; --soft:#dbe8f9;
+  --err:#c0182b; --band:#0b2a5b; --band-ink:#ffffff; --sky:#9cc3f0;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif; --body:Inter,system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#08142b; --surface:#102244; --ink:#eaf1fc; --muted:#a3b3d1; --line:#26407a;
+  --pin:#8fbcf5; --pin-ink:#06142e; --maple:#f2b705; --maple-ink:#2b2100; --ok:#52c796; --warn:#f0b35a; --soft:#18305e;
+  --err:#ff6b7d; --band:#0b2a5b; color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-block:16px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1280px;margin-inline:auto}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px;margin-bottom:14px;background:var(--band);color:var(--band-ink);border-radius:16px;padding:18px 22px;border-bottom:6px solid var(--maple)}
+.kicker{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:var(--maple)}
+.top h1 span{color:var(--sky)}
+.when{margin-top:8px;font-size:15px;font-weight:500;color:#d6e4fa}
+.stepper{display:flex;align-items:center;gap:12px}.stepper b{font-family:var(--display);font-size:34px;min-width:36px;text-align:center}.stepper .btn{min-width:48px;font-size:22px}.xg{margin:12px 0 0}
+.foot{margin-top:28px;color:var(--muted);font-size:14px;text-align:center}
+.foot a{color:var(--ink)}
+.dept{display:block;font-size:13px;color:var(--muted);font-weight:500;line-height:1.2}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,6vw,60px);line-height:.95;margin:0;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.chip b{font-family:var(--display);font-size:22px;font-weight:700;margin-right:4px;vertical-align:-1px}
+.chip.round{background:var(--maple);color:var(--maple-ink);border-color:var(--maple)}
+nav{display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--line);overflow-x:auto}
+nav button{font:inherit;font-family:var(--display);font-size:22px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;background:none;border:0;color:var(--muted);padding:8px 16px 6px;cursor:pointer;border-bottom:4px solid transparent;margin-bottom:-2px;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--maple)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--maple);outline-offset:2px}
+.note{background:var(--soft);border-left:5px solid var(--warn);padding:10px 14px;border-radius:6px;margin-bottom:14px;font-size:15px}
+.note.err{border-left-color:var(--err)}
+#status{min-height:1.4em;color:var(--muted);font-size:14px;margin-bottom:8px}
+input[type=search],input[type=text],input[type=number],textarea,select{font:inherit;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:12px 14px;width:100%;min-width:0}
+textarea{min-height:140px;resize:vertical}
+.btn{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--surface);color:var(--ink);border-radius:10px;padding:12px 18px;cursor:pointer;min-height:48px}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.btn.danger{border-color:var(--err);color:var(--err)}
+.btn.armed{background:var(--err);color:#fff;border-color:var(--err)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.small{min-height:36px;padding:6px 12px;font-size:14px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+@media (max-width:820px){.cols{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+h2{font-family:var(--display);font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;margin:0 0 10px}
+.people{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:62vh;overflow:auto}
+.person{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:54px;text-align:left;font:inherit;font-size:18px;font-weight:500;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;width:100%}
+.person:hover{border-color:var(--ink)}
+.person[aria-pressed="true"]{border:2px solid var(--pin)}
+.tag{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-radius:6px;padding:2px 8px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.tag.compete{background:var(--band);color:#fff}
+.tag.relax{background:var(--maple);color:var(--maple-ink)}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.choice{font:inherit;border:0;border-radius:14px;padding:18px 12px;cursor:pointer;text-align:center;min-height:120px}
+.choice b{display:block;font-family:var(--display);font-size:38px;line-height:1;text-transform:uppercase;font-weight:700}
+.choice span{display:block;margin-top:6px;font-size:14px;font-weight:500}
+.choice.compete{background:var(--band);color:#fff}
+.choice.relax{background:var(--maple);color:var(--maple-ink)}
+.choice:disabled{opacity:.45;cursor:not-allowed}
+.placed{text-align:center}
+.placed .big{font-family:var(--display);font-weight:800;font-size:clamp(90px,22vw,160px);line-height:.9;text-transform:uppercase;color:var(--pin)}
+.placed .who{font-size:22px;font-weight:600}
+.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:980px){.lanes{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
+.lane{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.lane header{display:block;margin:0;padding:10px 14px;background:var(--band);color:#fff}
+.lane.casual header{background:var(--maple);color:var(--maple-ink)}
+.lane header .n{font-family:var(--display);font-weight:700;font-size:40px;line-height:1;text-transform:uppercase}
+.lane header .c{font-size:14px;font-weight:600}
+.meter{height:6px;background:rgba(0,0,0,.15);border-radius:3px;margin-top:6px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--maple)}
+.lane ul{list-style:none;margin:0;padding:6px 10px 10px}
+.lane li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:clamp(15px,1.5vw,22px);font-weight:500}
+.lane li:last-child{border-bottom:0}
+.lane li.hit{background:var(--soft);outline:3px solid var(--maple);border-radius:6px;padding-inline:6px}
+.lane li .nm{min-width:0;overflow-wrap:anywhere}
+.empty{color:var(--muted);padding:10px 4px;font-size:14px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:2px solid var(--line)}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.r{font-family:var(--display);font-size:24px;font-weight:700;width:46px}
+td input{width:96px;padding:8px 10px;text-align:right;font-variant-numeric:tabular-nums}
+tr.cut td{border-bottom:3px solid var(--maple)}
+tr.out td{color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.bar p{margin:0;color:var(--muted);max-width:60ch;font-size:15px}
+.rrow{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.rrow select{padding:8px}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}
+@media (max-width:640px){.rrow{grid-template-columns:minmax(0,1fr) 90px}.rrow .row-actions{grid-column:1/-1}}
+.fine{color:var(--muted);font-size:14px}
+.subtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.subtabs button{font:inherit;font-weight:600;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:8px 16px;cursor:pointer;min-height:44px}
+.subtabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.champ{background:var(--maple);color:var(--maple-ink);border-radius:16px;padding:20px 22px;margin-bottom:16px;display:grid;gap:10px}
+.champ .lbl{font-family:var(--display);font-weight:700;font-size:26px;text-transform:uppercase;letter-spacing:.08em}
+.champ .win{font-family:var(--display);font-weight:700;font-size:clamp(46px,9vw,100px);line-height:.95;text-transform:uppercase;overflow-wrap:anywhere}
+.podium{display:flex;gap:10px;flex-wrap:wrap}
+.podium div{background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px}
+.dept-bars{display:grid;gap:10px;margin-top:14px}.dept-bar{display:grid;grid-template-columns:minmax(110px,180px) minmax(80px,1fr) 58px;gap:10px;align-items:center}.dept-bar-name{font-weight:600;overflow-wrap:anywhere}.dept-track{height:16px;background:var(--soft);border-radius:999px;overflow:hidden}.dept-fill{height:100%;background:linear-gradient(90deg,var(--band),#2877bf);border-radius:999px}.dept-score{font-family:var(--display);font-size:22px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:560px){.dept-bar{grid-template-columns:100px minmax(50px,1fr) 46px;gap:7px}.dept-bar-name{font-size:14px}}
+.stack{display:flex;flex-direction:column;gap:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script>var BOARD_CONFIG = { api: '', when: 'Friday, November 20, 2026 | 6:00 to 9:00 PM', place: "AMF Sheridan Lanes" };</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <div class="kicker">Graduate Student Association</div>
+      <h1>Departmental Clash<br><span>Bowling Tournament</span></h1>
+      <div class="when" id="when"></div>
+    </div>
+    <div class="chips" id="chips" aria-live="polite"></div>
+  </div>
+  <nav role="tablist" id="tabs">
+    <button role="tab" data-tab="checkin">Check-in</button>
+    <button role="tab" data-tab="lanes">Lanes</button>
+    <button role="tab" data-tab="scores">Scores</button>
+    <button role="tab" data-tab="roster">Roster</button>
+  </nav>
+  <div id="banner"></div>
+  <div class="card" id="pinbox" hidden style="margin-bottom:14px">
+    <h2>Staff sign-in</h2>
+    <p class="fine" style="margin-top:0">Check-in and scores need the staff PIN. Everyone can watch the lanes.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="password" id="pin" inputmode="numeric" placeholder="Staff PIN" autocomplete="off" aria-label="Staff PIN" style="max-width:220px"><button class="btn primary" id="pinbtn">Sign in</button></div>
+  </div>
+  <div id="status" role="status"></div>
+
+  <section id="p-checkin" hidden>
+    <div class="cols">
+      <div class="card">
+        <h2>Find your name</h2>
+        <input type="search" id="q" placeholder="Start typing a name" autocomplete="off" aria-label="Search the registered list">
+        <div id="people" class="people"></div>
+      </div>
+      <div class="stack">
+        <div class="card" id="decide"></div>
+        <div class="card">
+          <h2>Guests without a host</h2>
+          <p class="fine" style="margin-top:0">Count walk-up guests here. They get no lane and no scores.</p>
+          <div class="stepper"><button class="btn small" id="wkm" aria-label="One fewer walk-up guest">-</button><b id="wkn">0</b><button class="btn small" id="wkp" aria-label="One more walk-up guest">+</button></div>
+        </div>
+        <div class="card">
+          <h2>Student not on the list?</h2>
+          <div class="stack">
+            <input type="text" id="guest" placeholder="Full name" autocomplete="off" aria-label="Name of a late registrant">
+            <input type="text" id="guestdept" placeholder="Department" autocomplete="off" aria-label="Department of a late registrant">
+            <button class="btn" id="addguest">Add and choose</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="p-lanes" hidden>
+    <div id="champlanes"></div>
+    <div class="bar">
+      <p class="fine" id="laneinfo"></p>
+      <div style="min-width:min(100%,280px)"><input type="search" id="find" placeholder="Find my lane" aria-label="Highlight a name on the lanes"></div>
+    </div>
+    <div class="lanes" id="lanes"></div>
+    <div id="dept1" style="margin-top:16px"></div>
+  </section>
+
+  <section id="p-scores" hidden>
+    <div id="champ"></div>
+    <div class="bar" id="roundbar"><p id="roundtxt"></p><button class="btn primary" id="roundbtn"></button></div>
+    <div class="subtabs" id="rtabs" role="tablist"></div>
+    <div class="stack" id="tables"></div>
+    <div id="dept2" style="margin-top:16px"></div>
+  </section>
+
+  <section id="p-roster" hidden>
+    <div class="cols">
+      <div class="stack">
+        <div class="card">
+          <h2>Load the registered list</h2>
+          <p class="fine">In Excel, select the Name and Department columns (the header row is fine), copy, and paste here. Names already loaded are skipped.</p>
+          <textarea id="paste" placeholder="Jordan Lee&#9;Chemistry&#10;Sam Rivera&#9;Physics" aria-label="Names and departments to import"></textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button class="btn primary" id="import">Import names</button>
+            <label class="btn" for="file" style="display:inline-flex;align-items:center">Choose CSV file</label>
+            <input type="file" id="file" accept=".csv,.txt" hidden>
+          </div>
+        </div>
+        <div class="card stack">
+          <h2>Event</h2>
+          <button class="btn" id="export">Download results (CSV)</button>
+          <button class="btn danger" id="reset">Reset all check-ins and scores</button>
+          <p class="fine" id="resetnote">Keeps the registered names and clears the rest, including late adds and guest counts. Use it after a practice run.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Everyone</h2>
+        <div id="roster"></div>
+      </div>
+    </div>
+  </section>
+  <div class="foot">Questions? <a href="mailto:grad-sa@utulsa.edu">grad-sa@utulsa.edu</a></div>
+</div>
+<script>
+// Shared rules. Runs inside Google Apps Script (the server) and in the browser (demo mode and tests).
+var Logic = (function () {
+  var CAP = 8, COMP = [1, 2, 3, 4], CASUAL = 5;
+  var FIELDS = ['name', 'dept', 'status', 'mode', 'stage', 'lane', 'r1', 'r2', 'fin', 'cons', 'guest', 'late', 'at', 'extras'];
+  var ROUNDS = ['checkin', 'r1', 'r2', 'final', 'done'];
+  function blank(id, name, dept, guest) {
+    return { id: id, name: name, dept: dept || '', status: 'registered', mode: null, stage: null, lane: null, r1: null, r2: null, fin: null, cons: null, guest: !!guest, late: false, at: null, extras: 0 };
+  }
+  function laneCount(st, n) {
+    var c = 0; st.players.forEach(function (p) { if (p.status === 'in' && p.lane === n && p.stage !== 'done') c++; }); return c;
+  }
+  function pickLane(st, mode) {
+    var i, n, round = st.cfg.round;
+    if (round !== 'checkin' && mode === 'compete') {
+      for (i = 0; i < 2; i++) { n = [3, 4][i]; if (laneCount(st, n) < CAP) return n; }
+      return laneCount(st, CASUAL) < CAP ? CASUAL : null;
+    }
+    if (mode === 'compete') { for (i = 0; i < COMP.length; i++) if (laneCount(st, COMP[i]) < CAP) return COMP[i]; return null; }
+    if (laneCount(st, CASUAL) < CAP) return CASUAL;
+    for (i = 3; i >= 0; i--) if (laneCount(st, COMP[i]) < CAP) return COMP[i];
+    return null;
+  }
+  function find(st, id) { for (var i = 0; i < st.players.length; i++) if (st.players[i].id === id) return st.players[i]; return null; }
+  function clean(v, max) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max || 80); }
+  function newId(st, prefix) { var id; do { id = prefix + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36); } while (find(st, id)); return id; }
+  function setFields(p, f) {
+    FIELDS.forEach(function (k) {
+      if (!Object.prototype.hasOwnProperty.call(f, k)) return;
+      var v = f[k];
+      if (k === 'name' || k === 'dept') v = clean(v);
+      if (k === 'lane' || k === 'r1' || k === 'r2' || k === 'fin' || k === 'cons' || k === 'at') v = (v === null || v === '' || isNaN(v)) ? null : Number(v);
+      if (k === 'guest' || k === 'late') v = !!v;
+      if (k === 'extras') v = Math.max(0, Math.min(50, Math.round(Number(v) || 0)));
+      p[k] = v;
+    });
+  }
+  function apply(st, req) {
+    var a = req.action, p, i;
+    if (a === 'import') {
+      var have = {}, added = 0, skipped = 0;
+      st.players.forEach(function (x) { have[x.name.toLowerCase()] = x; });
+      (req.people || []).slice(0, 300).forEach(function (q, i2) {
+        var nm = clean(q.name), dp = clean(q.dept); if (!nm) return;
+        var ex = have[nm.toLowerCase()];
+        if (ex) { if (!ex.dept && dp) ex.dept = dp; skipped++; return; }
+        var np = blank(newId(st, 'p') + i2, nm, dp, false); st.players.push(np); have[nm.toLowerCase()] = np; added++;
+      });
+      return { added: added, skipped: skipped };
+    }
+    if (a === 'checkin') {
+      p = find(st, req.id); if (!p) return { error: 'missing' };
+      if (p.status === 'in') return { error: 'already', lane: p.lane };
+      var mode = req.mode === 'relax' ? 'relax' : 'compete', lane = pickLane(st, mode);
+      if (lane == null) return { error: 'full' };
+      var late = st.cfg.round !== 'checkin' && mode === 'compete';
+      p.extras = Math.max(0, Math.min(50, Math.round(Number(req.extras) || 0)));
+      p.status = 'in'; p.mode = mode; p.lane = lane; p.late = late; p.at = Date.now();
+      p.stage = mode === 'relax' ? 'relax' : (st.cfg.round === 'checkin' ? 'bowl' : 'cons');
+      return { id: p.id, name: p.name, extras: p.extras, lane: lane, mode: mode, stage: p.stage, late: late };
+    }
+    if (a === 'addguest') {
+      var nm2 = clean(req.name); if (!nm2) return { error: 'name' };
+      var ex2 = null; st.players.forEach(function (x) { if (x.name.toLowerCase() === nm2.toLowerCase()) ex2 = x; });
+      if (ex2) return { id: ex2.id, existing: true };
+      var g = blank(newId(st, 'g'), nm2, req.dept, true); st.players.push(g); return { id: g.id };
+    }
+    if (a === 'update') { p = find(st, req.id); if (!p) return { error: 'missing' }; setFields(p, req.fields || {}); return { id: p.id }; }
+    if (a === 'batch') {
+      (req.updates || []).forEach(function (u) { var q = find(st, u.id); if (q) setFields(q, u.fields || {}); });
+      if (req.round && ROUNDS.indexOf(req.round) > -1) st.cfg.round = req.round;
+      return { ok: true };
+    }
+    if (a === 'walkups') { st.cfg.walkups = Math.max(0, Math.min(500, Math.round(Number(req.n) || 0))); return { ok: true }; }
+    if (a === 'remove') { st.players = st.players.filter(function (x) { return x.id !== req.id; }); return { ok: true }; }
+    if (a === 'setround') { if (ROUNDS.indexOf(req.round) < 0) return { error: 'round' }; st.cfg.round = req.round; return { ok: true }; }
+    if (a === 'reset') {
+      st.players.forEach(function (x) { x.status = 'registered'; x.mode = null; x.stage = null; x.lane = null; x.r1 = null; x.r2 = null; x.fin = null; x.cons = null; x.late = false; x.at = null; x.extras = 0; });
+      st.players = st.players.filter(function (x) { return !x.guest; }); // late adds are dropped on reset; the registered list stays
+      st.cfg.round = 'checkin'; st.cfg.walkups = 0; return { ok: true };
+    }
+    return { error: 'unknown' };
+  }
+  return { CAP: CAP, blank: blank, laneCount: laneCount, pickLane: pickLane, apply: apply, FIELDS: FIELDS };
+})();
+</script>
+<script>
+(function () {
+  var CAP = Logic.CAP, CASUAL = 5, TABS = ['checkin', 'lanes', 'scores', 'roster'];
+  var STAGE = { bowl: 'Round 1', r2: 'Round 2', final: 'Final', cons: 'Consolation', relax: 'Just for fun', done: 'Finished' };
+  var ROUND = { checkin: 'Check-in open', r1: 'Round 1', r2: 'Round 2', final: 'Final', done: 'Finished' };
+  var $ = function (s) { return document.querySelector(s); };
+  var qs = new URLSearchParams(location.search);
+  var API = qs.get('api') || (window.BOARD_CONFIG && BOARD_CONFIG.api) || '';
+  var DEMO = !API;
+  var DEMO_PREVIEW = qs.get('demo') === '1';
+  var DEMO_KEY = DEMO_PREVIEW ? 'dc_demo_preview' : 'dc_demo';
+  var pin = ''; try { pin = localStorage.getItem('dc_pin') || ''; } catch (e) {}
+  var players = [], cfg = { round: 'checkin' }, locked = false, authed = true, canWrite = true;
+  var rtab = null, sel = null, placed = null, armed = null, query = '', findQ = '', dirtyScores = false, loaded = false, loadFailed = false, busy = false, guestsN = 0, pending = 0, chain = Promise.resolve();
+  function h(tag, attrs) {
+    var e = document.createElement(tag), kids = Array.prototype.slice.call(arguments, 2);
+    Object.keys(attrs || {}).forEach(function (n) {
+      var v = attrs[n]; if (v == null || v === false) return;
+      if (n === 'class') e.className = v;
+      else if (n.slice(0, 2) === 'on') e.addEventListener(n.slice(2), v);
+      else if (n === 'value') e.value = v;
+      else e.setAttribute(n, v === true ? '' : v);
+    });
+    (function add(list) { list.forEach(function (c) { if (Array.isArray(c)) return add(c); if (c == null || c === false) return; e.append(c.nodeType ? c : document.createTextNode(String(c))); }); })(kids);
+    return e;
+  }
+  function say(msg) { $('#status').textContent = msg || ''; }
+  function num(v) { return v !== null && v !== undefined && v !== '' && !isNaN(v); }
+
+  // ---------- data: Google Sheet through the Apps Script web app (or this device only in practice mode) ----------
+  function demoLoad() {
+    try { var s = JSON.parse(localStorage.getItem(DEMO_KEY)); if (s && s.players) return s; } catch (e) {}
+    if (DEMO_PREVIEW) return { cfg: { round: 'checkin', walkups: 0 }, players: [
+      { id:'d1',name:'Amina Yusuf',dept:'Cyber Studies',status:'in',mode:'compete',stage:'bowl',lane:1,r1:182,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d2',name:'Daniel Park',dept:'Computer Science',status:'in',mode:'compete',stage:'bowl',lane:2,r1:168,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d3',name:'Priya Shah',dept:'Biology',status:'in',mode:'compete',stage:'bowl',lane:3,r1:154,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d4',name:'Marcus Reed',dept:'Cyber Studies',status:'in',mode:'compete',stage:'bowl',lane:4,r1:176,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d5',name:'Lena Ortiz',dept:'Mathematics',status:'in',mode:'relax',stage:'relax',lane:5,r1:null,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d6',name:'Evan Brooks',dept:'Biology',status:'in',mode:'compete',stage:'bowl',lane:1,r1:141,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d7',name:'Sam Rivera',dept:'Chemistry',status:'registered',mode:null,stage:null,lane:null,r1:null,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d8',name:'Nia James',dept:'Computer Science',status:'registered',mode:null,stage:null,lane:null,r1:null,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d9',name:'Theo Okafor',dept:'Chemistry',status:'registered',mode:null,stage:null,lane:null,r1:null,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 },
+      { id:'d10',name:'Riley Morgan',dept:'Biology',status:'registered',mode:null,stage:null,lane:null,r1:null,r2:null,fin:null,cons:null,guest:false,late:false,at:null,extras:0 }
+    ] };
+    return { players: [], cfg: { round: 'checkin', walkups: 0 } };
+  }
+  function demoSave(s) { try { localStorage.setItem(DEMO_KEY, JSON.stringify(s)); } catch (e) {} }
+  function remote(req) {
+    if (DEMO) return Promise.resolve().then(function () { var st = demoLoad(), res = Logic.apply(st, req); demoSave(st); return { ok: !res.error, result: res, state: st, locked: false, authed: true }; });
+    req.pin = pin;
+    return fetch(API, { method: 'POST', body: JSON.stringify(req) }).then(function (r) { return r.json(); });
+  }
+  function adopt(r) {
+    if (r.state) { players = r.state.players; if (r.state.cfg.round !== cfg.round) { rtab = null; armed = null; } cfg = r.state.cfg; }
+    locked = !!r.locked; authed = r.authed !== false; canWrite = !locked || authed;
+  }
+  function act(req, optimistic) {
+    if (optimistic) { var st = { players: players, cfg: cfg }; Logic.apply(st, req); players = st.players; cfg = st.cfg; renderAll(); }
+    pending++;
+    var q = chain.then(function () { return remote(req); }).then(function (r) {
+      pending--;
+      if (r && r.error === 'pin') { authed = false; canWrite = false; say('The staff PIN was not accepted. Sign in again.'); }
+      else if (r && r.state && pending === 0) { adopt(r); loaded = true; loadFailed = false; }
+      else if (!r || (!r.ok && !r.result)) say('That change did not save.');
+      renderAll(); return r || { ok: false };
+    }, function () { pending--; loadFailed = true; say('Did not save. Check the connection; the board refreshes by itself when it returns.'); renderAll(); return { ok: false, error: 'net' }; });
+    chain = q; return q;
+  }
+  function upd(id, data) { return act({ action: 'update', id: id, fields: data }, true); }
+  function setRound(r) { return act({ action: 'setround', round: r }, true); }
+  function sched() { setTimeout(poll, document.hidden ? 60000 : (locked && !authed ? 20000 : 5000)); }
+  function poll() {
+    if (DEMO) return;
+    if (pending > 0) return sched();
+    var u = API + (API.indexOf('?') > -1 ? '&' : '?') + 'action=state&pin=' + encodeURIComponent(pin) + '&t=' + Date.now();
+    fetch(u).then(function (r) { return r.json(); }).then(function (r) {
+      if (!r || !r.state) throw new Error('bad');
+      if (pending === 0) { adopt(r); loaded = true; loadFailed = false; if ($('#status').textContent === 'Loading the list...') say(''); renderAll(); }
+    }).catch(function () { loadFailed = true; showBanner(); }).then(sched);
+  }
+
+  // ---------- lanes and check-in (rules live in Logic, shared with the server) ----------
+  function checkIn(id, mode) {
+    var p = players.find(function (x) { return x.id === id; }); if (!p || busy) return;
+    var ex = guestsN; busy = true; say('Placing ' + p.name + '...'); renderCheckin();
+    act({ action: 'checkin', id: id, mode: mode, extras: ex }).then(function (r) {
+      busy = false; guestsN = 0; var res = (r && r.result) || {};
+      if (res.error === 'already') { say(p.name + ' is already checked in (Lane ' + res.lane + ').'); sel = null; }
+      else if (res.error === 'full') say('Every lane is full. Move someone on the Roster tab.');
+      else if (r && r.ok && res.lane) { placed = { name: res.name, extras: res.extras, lane: res.lane, mode: res.mode, stage: res.stage, late: res.late }; sel = null; say(''); }
+      else if (!r || r.error !== 'pin') say('That check-in did not go through. Try again.');
+      renderAll();
+    });
+  }
+  function undo(id) { return upd(id, { status: 'registered', mode: null, stage: null, lane: null, r1: null, r2: null, fin: null, cons: null, at: null, late: false }); }
+
+  // ---------- rounds ----------
+  function rank(list, key) {
+    var scored = list.filter(function (p) { return num(key(p)); }).sort(function (a, b) { return key(b) - key(a) || a.name.localeCompare(b.name); });
+    var r = 0, prev = null, rows = scored.map(function (p, i) { var v = key(p); if (v !== prev) { r = i + 1; prev = v; } return { p: p, rank: r, v: v }; });
+    var rest = list.filter(function (p) { return !num(key(p)); }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+    return { rows: rows, rest: rest };
+  }
+  function split(list, key, n) {
+    var rk = rank(list, key), tie = rk.rows.length > n && rk.rows[n - 1].v === rk.rows[n].v;
+    return { top: rk.rows.slice(0, n).map(function (x) { return x.p; }), rest: rk.rows.slice(n).map(function (x) { return x.p; }).concat(rk.rest), tie: tie, tieScore: tie ? rk.rows[n - 1].v : null, unscored: rk.rest.length };
+  }
+  function advance() {
+    var r = cfg.round, ups = [], s, moving;
+    var go = function (round) { act({ action: 'batch', updates: ups.map(function (u) { return { id: u[0], fields: u[1] }; }), round: round }, true); };
+    if (r === 'checkin') { setRound('r1'); return; }
+    if (r === 'final') { setRound('done'); return; }
+    if (r === 'r1') {
+      s = split(players.filter(function (p) { return p.stage === 'bowl'; }), function (p) { return p.r1; }, 16);
+      s.top.forEach(function (p, i) { ups.push([p.id, { stage: 'r2', lane: i < 8 ? 1 : 2 }]); });
+      moving = {}; s.top.concat(s.rest).forEach(function (p) { moving[p.id] = 1; });
+      var occ = { 3: 0, 4: 0 }; players.forEach(function (p) { if (!moving[p.id] && p.status === 'in' && p.stage !== 'done' && (p.lane === 3 || p.lane === 4)) occ[p.lane]++; });
+      s.rest.filter(function (p) { return p.lane === 3 || p.lane === 4; }).forEach(function (p) { occ[p.lane]++; ups.push([p.id, { stage: 'cons' }]); });
+      s.rest.filter(function (p) { return !(p.lane === 3 || p.lane === 4); }).forEach(function (p) {
+        var ln = occ[3] < CAP ? 3 : (occ[4] < CAP ? 4 : null); if (ln) occ[ln]++; ups.push([p.id, { stage: 'cons', lane: ln }]);
+      });
+      go('r2'); return;
+    }
+    if (r === 'r2') {
+      s = split(players.filter(function (p) { return p.stage === 'r2'; }), function (p) { return num(p.r2) ? (p.r1 || 0) + p.r2 : null; }, 8);
+      s.top.forEach(function (p, i) { ups.push([p.id, { stage: 'final', lane: i % 2 === 0 ? 1 : 2 }]); });
+      s.rest.forEach(function (p) { ups.push([p.id, { stage: 'done', lane: null }]); });
+      go('final');
+    }
+  }
+  function roundPlan() {
+    var r = cfg.round;
+    if (r === 'checkin') return { label: 'Start Round 1', help: 'Closes check-in for scored play. Anyone who chooses Compete after this joins the consolation pool.', ok: true };
+    if (r === 'r1') { var s1 = split(players.filter(function (p) { return p.stage === 'bowl'; }), function (p) { return p.r1; }, 16); return { label: 'Send top 16 to Round 2', help: 'Top 16 move to lanes 1 and 2. Everyone else plays the consolation pool on lanes 3 and 4.', split: s1, ok: !s1.tie, tieMsg: 'Tie for 16th place at ' + s1.tieScore + '. Settle it with a roll-off, then add the result to the scores (for example +1 for the winner).' }; }
+    if (r === 'r2') { var s2 = split(players.filter(function (p) { return p.stage === 'r2'; }), function (p) { return num(p.r2) ? (p.r1 || 0) + p.r2 : null; }, 8); return { label: 'Send top 8 to the Final', help: 'Round 1 and Round 2 scores count together. Final scores start from zero.', split: s2, ok: !s2.tie, tieMsg: 'Tie for 8th place at ' + s2.tieScore + '. Settle it with a roll-off, then adjust the Round 2 score.' }; }
+    if (r === 'final') {
+      var fl = players.filter(function (p) { return p.stage === 'final'; }), fr = rank(fl, function (p) { return p.fin; });
+      var tie1 = fr.rows.length > 1 && fr.rows[0].v === fr.rows[1].v;
+      return { label: 'Finish and show the winner', help: 'Shows the champion on the Scores and Lanes tabs. Scores stay editable.', split: { unscored: fr.rest.length }, ok: fr.rows.length > 0 && !tie1,
+        tieMsg: fr.rows.length ? 'Tie for first place at ' + fr.rows[0].v + '. Settle it with a roll-off, then add the result to the Final score (for example +1 for the winner).' : 'Enter the Final scores first.' };
+    }
+    return { label: null, help: 'The event is finished. Download the results from the Roster tab.' };
+  }
+  // ---------- render ----------
+  function showBanner() {
+    var b = $('#banner'); b.textContent = '';
+    if (DEMO) b.append(h('div', { class: 'note' }, DEMO_PREVIEW ? 'LOCAL DEMO • Sample attendees and scores. Changes stay in this browser and are not shared with other devices.' : 'Practice mode. No shared service is connected, so data stays on this device only.')); 
+    else if (loadFailed) b.append(h('div', { class: 'note err' }, 'Cannot reach the shared list right now. Showing what was last loaded. It updates by itself when the connection returns.'));
+  }
+  function applyAccess() {
+    var staff = !locked || authed;
+    document.querySelectorAll('#tabs button').forEach(function (b) { b.hidden = !staff && b.dataset.tab !== 'lanes' && b.dataset.tab !== 'scores'; });
+    $('#pinbox').hidden = staff || DEMO;
+    var cur = TABS.filter(function (t) { return !$('#p-' + t).hidden; })[0];
+    if (!staff && cur !== 'lanes' && cur !== 'scores') showTab('lanes');
+  }
+  function deptCard() {
+    var m = {};
+    players.forEach(function (p) { if (p.dept && p.mode === 'compete' && num(p.r1)) { var d = m[p.dept] || (m[p.dept] = { n: 0, sum: 0 }); d.n++; d.sum += p.r1; } });
+    var rows = Object.keys(m).map(function (k) { return { dept: k, avg: m[k].sum / m[k].n, n: m[k].n }; }).sort(function (a, b) { return b.avg - a.avg || a.dept.localeCompare(b.dept); });
+    if (!rows.length) return null;
+    var peak = Math.max.apply(null, rows.map(function (x) { return x.avg; })) || 1;
+    return h('div', { class: 'card' }, h('h2', {}, 'Department standings'), h('p', { class: 'fine', style: 'margin:0 0 8px' }, 'Average Round 1 score per competitor.'),
+      h('div', { class: 'dept-bars', role: 'img', 'aria-label': 'Department average Round 1 scores' }, rows.slice(0, 8).map(function (x) { return h('div', { class: 'dept-bar' }, h('span', { class: 'dept-bar-name' }, x.dept), h('span', { class: 'dept-track' }, h('span', { class: 'dept-fill', style: 'display:block;width:' + (x.avg / peak * 100).toFixed(1) + '%' })), h('span', { class: 'dept-score' }, x.avg.toFixed(1))); })),
+      h('div', { class: 'scroll', style: 'margin-top:12px' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, '#'), h('th', {}, 'Department'), h('th', {}, 'Average'), h('th', {}, 'Bowlers'))),
+        h('tbody', {}, rows.slice(0, 12).map(function (x, i) { return h('tr', {}, h('td', { class: 'r' }, i + 1), h('td', {}, x.dept), h('td', {}, x.avg.toFixed(1)), h('td', {}, x.n)); })))));
+  }
+  function renderDept() { ['#dept1', '#dept2'].forEach(function (id) { var el = $(id); el.textContent = ''; var c = deptCard(); if (c) el.append(c); }); }
+  function renderChips() {
+    var inn = players.filter(function (p) { return p.status === 'in'; });
+    var cn = inn.filter(function (p) { return p.mode === 'compete'; }).length;
+    var el = $('#chips'); el.textContent = '';
+    el.append(h('span', { class: 'chip' }, h('b', {}, inn.length), 'of ' + players.length + ' checked in'),
+      h('span', { class: 'chip' }, h('b', {}, cn), 'competing'),
+      h('span', { class: 'chip' }, h('b', {}, inn.length - cn), 'relaxing'),
+      h('span', { class: 'chip' }, h('b', {}, inn.length + inn.reduce(function (a, p) { return a + (p.extras || 0); }, 0) + (cfg.walkups || 0)), 'headcount with guests'),
+      h('span', { class: 'chip round' }, ROUND[cfg.round] || ROUND.checkin));
+  }
+  function renderCheckin() {
+    $('#wkn').textContent = cfg.walkups || 0;
+    var list = players.filter(function (p) { return p.status === 'registered' && (!query || p.name.toLowerCase().indexOf(query) > -1); })
+      .sort(function (a, b) { return a.name.localeCompare(b.name); });
+    var box = $('#people'); box.textContent = '';
+    if (!players.length) box.append(h('div', { class: 'empty' }, loaded ? 'No names yet. Open the Roster tab and paste the registered list.' : 'Loading the list...'));
+    else if (!list.length) box.append(h('div', { class: 'empty' }, query ? 'No match. Use "Not on the list?" to add a late registrant.' : 'Everyone on the list is checked in.'));
+    list.slice(0, 80).forEach(function (p) {
+      box.append(h('button', { class: 'person', 'aria-pressed': sel === p.id ? 'true' : 'false', onclick: function () { sel = p.id; placed = null; guestsN = 0; renderCheckin(); if (window.innerWidth <= 820) $('#decide').scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
+        h('span', {}, h('span', {}, p.name), p.dept ? h('small', { class: 'dept' }, p.dept) : null), p.guest ? h('span', { class: 'tag' }, 'Late add') : null));
+    });
+    var d = $('#decide'); d.textContent = '';
+    var sp = sel && players.find(function (p) { return p.id === sel && p.status === 'registered'; });
+    if (placed) {
+      d.append(h('div', { class: 'placed' },
+        h('div', { class: 'who' }, placed.name + (placed.extras ? ' +' + placed.extras + ' guest' + (placed.extras > 1 ? 's' : '') : '')),
+        h('div', { class: 'big' }, 'Lane ' + placed.lane),
+        h('p', {}, placed.mode === 'relax' ? 'Just for fun. Scores are not kept.' : (placed.late ? 'Round 1 has started, so this is the consolation pool.' : 'Competing. Scores are kept.')),
+        h('button', { class: 'btn primary', onclick: function () { placed = null; renderCheckin(); $('#q').focus(); $('#q').scrollIntoView({ block: 'center' }); } }, 'Next person')));
+    } else if (sp) {
+      var cl = Logic.pickLane({ players: players, cfg: cfg }, 'compete'), rl = Logic.pickLane({ players: players, cfg: cfg }, 'relax');
+      d.append(h('h2', {}, sp.name), sp.dept ? h('p', { class: 'fine', style: 'margin:-6px 0 6px' }, sp.dept) : null, h('p', { class: 'fine', style: 'margin:0' }, 'Compete for the top spots, or just relax and play?'),
+        h('div', { class: 'stepper xg' }, h('span', {}, 'Guests with them'), h('button', { class: 'btn small', 'aria-label': 'One fewer guest', onclick: function () { guestsN = Math.max(0, guestsN - 1); renderCheckin(); } }, '-'), h('b', {}, guestsN), h('button', { class: 'btn small', 'aria-label': 'One more guest', onclick: function () { guestsN = Math.min(50, guestsN + 1); renderCheckin(); } }, '+')),
+        h('div', { class: 'choices' },
+          h('button', { class: 'choice compete', disabled: !canWrite || busy || cl == null, onclick: function () { checkIn(sp.id, 'compete'); } }, h('b', {}, 'Compete'), h('span', {}, cl == null ? 'Competitor lanes are full' : 'Scored rounds, next: Lane ' + cl)),
+          h('button', { class: 'choice relax', disabled: !canWrite || busy || rl == null, onclick: function () { checkIn(sp.id, 'relax'); } }, h('b', {}, 'Relax'), h('span', {}, rl == null ? 'All lanes are full' : 'No scores, next: Lane ' + rl))),
+        h('p', {}, h('button', { class: 'btn small', onclick: function () { sel = null; renderCheckin(); } }, 'Cancel')));
+    } else {
+      d.append(h('h2', {}, 'Check in'), h('p', { class: 'fine', style: 'margin:0' }, 'Pick a name from the list. Then choose Compete or Relax. The lane number shows here.'));
+    }
+  }
+  var LABEL = { compete: 'Compete', relax: 'Fun' };
+  function renderLanes() {
+    var el = $('#lanes'); el.textContent = '';
+    var q = findQ.trim().toLowerCase();
+    var unassigned = players.filter(function (p) { return p.status === 'in' && p.lane == null && p.stage !== 'done'; });
+    [1, 2, 3, 4, 5].forEach(function (n) {
+      var ps = players.filter(function (p) { return p.status === 'in' && p.lane === n && p.stage !== 'done'; }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+      var casual = n === CASUAL, tagline = casual ? 'Just for fun' : (cfg.round === 'checkin' || cfg.round === 'r1' ? 'Competitive' : (n <= 2 ? (cfg.round === 'final' ? 'Final' : 'Round 2') : 'Consolation'));
+      el.append(h('div', { class: 'lane' + (casual ? ' casual' : '') },
+        h('header', {}, h('div', { class: 'n' }, 'Lane ' + n), h('div', { class: 'c' }, tagline + '  |  ' + ps.length + ' of ' + CAP), h('div', { class: 'meter' }, h('i', { style: 'width:' + Math.min(100, ps.length / CAP * 100) + '%' }))),
+        h('ul', {}, ps.length ? ps.map(function (p) { return h('li', { class: q && p.name.toLowerCase().indexOf(q) > -1 ? 'hit' : '' }, h('span', { class: 'nm' }, p.name, p.dept ? h('small', { class: 'dept' }, p.dept) : null), h('span', {}, p.extras ? h('span', { class: 'tag', style: 'margin-right:6px' }, '+' + p.extras) : null, p.mode === 'relax' ? h('span', { class: 'tag relax' }, LABEL.relax) : null)); }) : h('li', { class: 'empty' }, 'Open'))));
+    });
+    if (unassigned.length) el.append(h('div', { class: 'lane' }, h('header', {}, h('div', { class: 'n' }, 'Need a lane'), h('div', { class: 'c' }, unassigned.length + ' people')), h('ul', {}, unassigned.map(function (p) { return h('li', {}, h('span', { class: 'nm' }, p.name)); }))));
+    $('#laneinfo').textContent = cfg.round === 'checkin' ? 'Lanes 1 to 4 are competitive, 8 per lane. Lane 5 is for fun.' : (ROUND[cfg.round] + ' is on. Find your name to see your lane.');
+  }
+  function scoreTable(title, list, key, o) {
+    var rk = rank(list, key), rmap = {}; rk.rows.forEach(function (x) { rmap[x.p.id] = x.rank; });
+    var all = list.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).map(function (p) { return { p: p, rank: rmap[p.id] == null ? null : rmap[p.id] }; });
+    if (!all.length) return null;
+    var head = h('tr', {}, h('th', {}, '#'), h('th', {}, 'Name'), o.extra ? h('th', {}, o.extra.label) : null, h('th', {}, o.label), o.total ? h('th', {}, 'Total') : null);
+    var rows = all.map(function (x, i) {
+      var p = x.p, cls = '';
+      if (o.cut && x.rank != null && x.rank > o.cut) cls = 'out';
+      var inp = h('input', { type: 'number', inputmode: 'numeric', min: '0', max: '300', value: num(p[o.field]) ? p[o.field] : '', 'aria-label': o.label + ' score for ' + p.name, disabled: !canWrite,
+        onchange: function (ev) { var v = ev.target.value; var d = {}; d[o.field] = v === '' ? null : Math.max(0, Math.min(300, Math.round(Number(v)))); upd(p.id, d); } });
+      return h('tr', { class: cls }, h('td', { class: 'r' }, x.rank == null ? '' : x.rank), h('td', {}, p.name, p.dept ? h('small', { class: 'dept' }, p.dept) : null, o.cut && x.rank != null && x.rank <= o.cut ? h('span', { class: 'tag compete', style: 'margin-left:8px' }, 'Advances') : null, p.lane ? h('span', { class: 'tag', style: 'margin-left:8px' }, 'Lane ' + p.lane) : null),
+        o.extra ? h('td', {}, num(p[o.extra.field]) ? p[o.extra.field] : '') : null, h('td', {}, inp), o.total ? h('td', {}, num(p[o.field]) ? (p.r1 || 0) + p[o.field] : '') : null);
+    });
+    return h('div', { class: 'card' }, h('h2', {}, title), o.cut ? h('p', { class: 'fine', style: 'margin:0 0 8px' }, 'Names stay in alphabetical order while you type. The # column ranks by score. Top ' + o.cut + ' advance.') : null, h('div', { class: 'scroll' }, h('table', {}, h('thead', {}, head), h('tbody', {}, rows))));
+  }
+  function champCard() {
+    if (cfg.round !== 'done') return null;
+    var fr = rank(players.filter(function (p) { return p.stage === 'final' || num(p.fin); }), function (p) { return p.fin; });
+    if (!fr.rows.length) return null;
+    var top = fr.rows.filter(function (x) { return x.rank === 1; });
+    var cons = rank(players.filter(function (p) { return num(p.cons); }), function (p) { return p.cons; }).rows.filter(function (x) { return x.rank === 1; });
+    var w = top[0].p, els = [h('div', { class: 'lbl' }, top.length > 1 ? 'Tied for first' : 'Champion'),
+      h('div', { class: 'win' }, top.map(function (x) { return x.p.name; }).join(' & ')),
+      h('div', {}, top[0].v + ' pins in the final' + (num(w.r2) ? '  |  Rounds 1 and 2 together: ' + ((w.r1 || 0) + w.r2) : ''))];
+    var pod = fr.rows.filter(function (x) { return x.rank >= 2 && x.rank <= 3; });
+    if (pod.length) els.push(h('div', { class: 'podium' }, pod.map(function (x) { return h('div', {}, h('b', {}, (x.rank === 2 ? '2nd ' : '3rd ') + x.p.name), '  ' + x.v + ' pins'); })));
+    if (cons.length) els.push(h('div', {}, 'Best of the rest (consolation): ' + cons.map(function (x) { return x.p.name; }).join(' & ') + ', ' + cons[0].v + ' pins'));
+    return h('div', { class: 'champ' }, els);
+  }
+  function renderChamp() { ['#champ', '#champlanes'].forEach(function (id) { var el = $(id); el.textContent = ''; var c = champCard(); if (c) el.append(c); }); }
+  function scoreTabs() {
+    var r = cfg.round, out = [{ id: 'r1', label: 'Round 1', closed: r !== 'checkin' && r !== 'r1' }];
+    if (r === 'r2' || r === 'final' || r === 'done') out.push({ id: 'r2', label: 'Round 2', closed: r === 'final' || r === 'done' });
+    if (r === 'final' || r === 'done') out.push({ id: 'final', label: 'Final', closed: r === 'done' });
+    if (players.some(function (p) { return p.status === 'in' && p.mode === 'compete' && (p.stage === 'cons' || num(p.cons)); })) out.push({ id: 'cons', label: 'Consolation', closed: r === 'done' });
+    return out;
+  }
+  function curTab() { var r = cfg.round; return r === 'r2' ? 'r2' : (r === 'final' || r === 'done') ? 'final' : 'r1'; }
+  function renderBar() {
+    var plan = roundPlan(), txt = $('#roundtxt'), btn = $('#roundbtn');
+    var warn = plan.split && plan.split.unscored ? plan.split.unscored + ' without a score will not advance. ' : '';
+    txt.textContent = plan.ok === false ? plan.tieMsg : warn + plan.help;
+    txt.style.color = plan.ok === false ? 'var(--pin)' : ''; txt.style.fontWeight = plan.ok === false ? '600' : '';
+    btn.hidden = !plan.label; if (!plan.label) return;
+    var isArmed = armed === cfg.round;
+    btn.className = 'btn ' + (isArmed ? 'armed' : 'primary');
+    btn.disabled = !canWrite || plan.ok === false;
+    btn.textContent = isArmed ? 'Confirm: ' + plan.label : plan.label;
+  }
+  $('#roundbtn').addEventListener('click', function () {
+    var plan = roundPlan(); if (!plan.label || plan.ok === false || !canWrite) return;
+    if (plan.split && plan.split.unscored && armed !== cfg.round) { armed = cfg.round; renderBar(); return; }
+    armed = null; advance();
+  });
+  function renderScores() {
+    renderBar();
+    var panel = $('#p-scores'); if (panel.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') { dirtyScores = true; return; }
+    dirtyScores = false;
+    var tabs = scoreTabs(), eff = rtab && tabs.some(function (x) { return x.id === rtab; }) ? rtab : curTab();
+    if (!tabs.some(function (x) { return x.id === eff; })) eff = tabs[0].id;
+    var rt = $('#rtabs'); rt.textContent = '';
+    tabs.forEach(function (x) {
+      rt.append(h('button', { role: 'tab', 'aria-selected': x.id === eff ? 'true' : 'false', onclick: function () { rtab = x.id; renderScores(); } }, x.label, x.closed ? h('span', { class: 'tag', style: 'margin-left:8px' }, 'Closed') : null));
+    });
+    var inR1 = function (p) { return p.mode === 'compete' && (p.stage === 'bowl' || num(p.r1)); };
+    var make = {
+      r1: function () { return scoreTable('Round 1, first 5 frames', players.filter(inR1), function (p) { return p.r1; }, { field: 'r1', label: 'Pins', cut: (cfg.round === 'checkin' || cfg.round === 'r1') ? 16 : 0 }); },
+      r2: function () { return scoreTable('Round 2, next 5 frames', players.filter(function (p) { return p.stage === 'r2' || num(p.r2); }), function (p) { return num(p.r2) ? (p.r1 || 0) + p.r2 : null; }, { field: 'r2', label: 'Round 2', extra: { label: 'Round 1', field: 'r1' }, total: true, cut: cfg.round === 'r2' ? 8 : 0 }); },
+      final: function () { return scoreTable('Final, 3 frames', players.filter(function (p) { return p.stage === 'final' || num(p.fin); }), function (p) { return p.fin; }, { field: 'fin', label: 'Pins' }); },
+      cons: function () { return scoreTable('Consolation pool', players.filter(function (p) { return p.status === 'in' && p.mode === 'compete' && (p.stage === 'cons' || num(p.cons)); }), function (p) { return p.cons; }, { field: 'cons', label: 'Pins' }); }
+    };
+    var t = $('#tables'); t.textContent = '';
+    var tbl = make[eff](), cur = tabs.filter(function (x) { return x.id === eff; })[0];
+    if (tbl) { if (cur && cur.closed) t.append(h('p', { class: 'fine', style: 'margin:0' }, 'This round is closed. Scores can still be corrected.')); t.append(tbl); }
+    else t.append(h('div', { class: 'card empty' }, 'Scores appear here once people check in as competitors.'));
+  }
+  function renderRoster() {
+    var r = $('#roster'); r.textContent = '';
+    if (!players.length) { r.append(h('div', { class: 'empty' }, 'No names yet.')); return; }
+    players.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (p) {
+      var inn = p.status === 'in', acts = h('div', { class: 'row-actions' });
+      if (inn) acts.append(h('input', { type: 'number', min: '0', max: '50', value: p.extras || 0, 'aria-label': 'Guests with ' + p.name, title: 'Guests with them', disabled: !canWrite, style: 'width:64px;padding:6px', onchange: function (ev) { upd(p.id, { extras: ev.target.value }); } }), h('button', { class: 'btn small', disabled: !canWrite, onclick: function () { undo(p.id); } }, 'Undo check-in'));
+      acts.append(h('button', { class: 'btn small danger', disabled: !canWrite, onclick: function () { act({ action: 'remove', id: p.id }, true); } }, 'Remove'));
+      var s = inn ? h('select', { 'aria-label': 'Lane for ' + p.name, disabled: !canWrite, onchange: function (ev) { upd(p.id, { lane: ev.target.value === '' ? null : Number(ev.target.value) }); } },
+        h('option', { value: '' }, 'No lane'), [1, 2, 3, 4, 5].map(function (n) { return h('option', { value: n, selected: p.lane === n }, 'Lane ' + n); })) : h('span', { class: 'tag' }, 'Not here yet');
+      r.append(h('div', { class: 'rrow' }, h('div', {}, h('div', {}, p.name), h('div', { class: 'fine' }, (p.dept ? p.dept + (inn ? ' | ' : '') : '') + (inn ? (p.mode === 'compete' ? 'Competing' : 'Relaxing') + ' | ' + (STAGE[p.stage] || '') : ''))), s, acts));
+    });
+  }
+  function renderAll() { showBanner(); applyAccess(); renderChips(); renderChamp(); renderDept(); renderCheckin(); renderLanes(); renderScores(); renderRoster(); }
+
+  // ---------- tabs ----------
+  function showTab(name) {
+    if (TABS.indexOf(name) < 0) name = 'checkin';
+    TABS.forEach(function (t) { $('#p-' + t).hidden = t !== name; });
+    document.querySelectorAll('#tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
+  }
+  document.querySelectorAll('#tabs button').forEach(function (b) { b.addEventListener('click', function () { location.hash = b.dataset.tab; showTab(b.dataset.tab); }); });
+  window.addEventListener('hashchange', function () { showTab(location.hash.slice(1)); applyAccess(); });
+
+  // ---------- inputs ----------
+  $('#q').addEventListener('input', function (e) { query = e.target.value.trim().toLowerCase(); renderCheckin(); });
+  $('#find').addEventListener('input', function (e) { findQ = e.target.value; renderLanes(); });
+  $('#p-scores').addEventListener('focusout', function () { setTimeout(function () { if (dirtyScores) renderScores(); }, 0); });
+  $('#addguest').addEventListener('click', function () {
+    var name = $('#guest').value.trim(), dept = $('#guestdept').value.trim(); if (!name || !canWrite) return;
+    var lc = name.toLowerCase(), ex = players.find(function (p) { return p.name.toLowerCase() === lc; });
+    if (ex) { say(ex.status === 'in' ? ex.name + ' is already checked in (Lane ' + ex.lane + ').' : ''); if (ex.status !== 'in') { sel = ex.id; placed = null; } $('#guest').value = ''; $('#guestdept').value = ''; renderAll(); return; }
+    $('#guest').value = ''; $('#guestdept').value = '';
+    act({ action: 'addguest', name: name, dept: dept }).then(function (r) { if (r && r.result && r.result.id) { sel = r.result.id; placed = null; } renderAll(); });
+  });
+
+  function splitCsv(l) { var out = [], cur = '', q = false, i, ch; for (i = 0; i < l.length; i++) { ch = l[i]; if (q) { if (ch === '"') { if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; } else if (ch === '"') q = true; else if (ch === ',') { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out; }
+  // Excel paste is tab-separated. A CSV file is comma-separated with a header row. A single column is just names.
+  function parsePeople(text) {
+    var lines = text.split(/\r?\n/).filter(function (l) { return l.trim(); });
+    if (!lines.length) return [];
+    var tab = lines.some(function (l) { return l.indexOf('\t') > -1; });
+    var cells = function (l) { return (tab ? l.split('\t') : splitCsv(l)).map(function (x) { return x.replace(/^"|"$/g, '').trim(); }); };
+    var first = cells(lines[0]), nameCol = 0, deptCol = first.length > 1 ? 1 : -1, fcol = -1, lcol = -1, header = false;
+    var fi = first.findIndex(function (x) { return /first/i.test(x); }), li = first.findIndex(function (x) { return /last|surname|family/i.test(x); });
+    var ni = first.findIndex(function (x) { return /name/i.test(x) && !/first|last/i.test(x); }), di = first.findIndex(function (x) { return /dep|program|school|college|unit|division/i.test(x); });
+    if (fi > -1 && li > -1) { header = true; fcol = fi; lcol = li; deptCol = di; }
+    else if (ni > -1 || di > -1) { header = true; nameCol = ni > -1 ? ni : 0; deptCol = di; }
+    if (!tab && !header) { return lines.map(function (l) { return { name: l.trim(), dept: '' }; }); }
+    return lines.slice(header ? 1 : 0).map(function (l) {
+      var c = cells(l); return { name: fcol > -1 ? (c[fcol] + ' ' + c[lcol]).trim() : (c[nameCol] || ''), dept: deptCol > -1 ? (c[deptCol] || '') : '' };
+    }).filter(function (x) { return x.name; });
+  }
+  $('#import').addEventListener('click', function () {
+    if (!canWrite) return;
+    var people = parsePeople($('#paste').value); if (!people.length) { say('Nothing to import. Paste names first.'); return; }
+    say('Importing ' + people.length + ' names...');
+    act({ action: 'import', people: people }).then(function (r) { var res = (r && r.result) || {}; if (r && r.ok) { say('Added ' + res.added + ' name' + (res.added === 1 ? '' : 's') + (res.skipped ? ' (' + res.skipped + ' already on the list)' : '') + '.'); $('#paste').value = ''; } else say('The import did not save. Try again.'); });
+  });
+  $('#file').addEventListener('change', function (e) { var f = e.target.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { $('#paste').value = String(rd.result); say('File loaded. Check the names, then choose Import names.'); }; rd.readAsText(f); e.target.value = ''; });
+
+  $('#wkp').addEventListener('click', function () { if (canWrite) act({ action: 'walkups', n: (cfg.walkups || 0) + 1 }, true); });
+  $('#wkm').addEventListener('click', function () { if (canWrite) act({ action: 'walkups', n: (cfg.walkups || 0) - 1 }, true); });
+  var resetArmed = false;
+  $('#reset').addEventListener('click', function () {
+    var b = $('#reset'); if (!canWrite) return;
+    if (!resetArmed) { resetArmed = true; b.textContent = 'Tap again to confirm. This clears every check-in and score.'; b.classList.add('armed'); setTimeout(function () { resetArmed = false; b.classList.remove('armed'); b.textContent = 'Reset all check-ins and scores'; }, 6000); return; }
+    resetArmed = false; b.classList.remove('armed'); b.textContent = 'Reset all check-ins and scores';
+    act({ action: 'reset' }, true); placed = null; sel = null; say('Reset. Everyone is back on the registered list.');
+  });
+  function csvCell(v) { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  $('#export').addEventListener('click', function () {
+    var head = ['Name', 'Department', 'Checked in', 'Choice', 'Stage', 'Lane', 'Round 1', 'Round 2', 'Round 1+2', 'Final', 'Consolation', 'Late add', 'Arrived after Round 1 start', 'Guests with them'];
+    var rows = players.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).map(function (p) {
+      return [p.name, p.dept || '', p.status === 'in' ? 'Yes' : 'No', p.mode === 'compete' ? 'Compete' : (p.mode === 'relax' ? 'Relax' : ''), STAGE[p.stage] || '', p.lane || '', num(p.r1) ? p.r1 : '', num(p.r2) ? p.r2 : '', num(p.r2) ? (p.r1 || 0) + p.r2 : '', num(p.fin) ? p.fin : '', num(p.cons) ? p.cons : '', p.guest ? 'Yes' : '', p.late ? 'Yes' : '', p.extras || 0];
+    });
+    var inS = players.filter(function (p) { return p.status === 'in'; }), gs = inS.reduce(function (a, p) { return a + (p.extras || 0); }, 0), wk = cfg.walkups || 0;
+    rows.push([], ['Students checked in', inS.length], ['Guests with students', gs], ['Walk-up guests', wk], ['Total headcount', inS.length + gs + wk]);
+    var csv = '﻿' + [head].concat(rows).map(function (r) { return r.map(csvCell).join(','); }).join('\r\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'departmental-clash-results.csv';
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); say('Downloaded.');
+  });
+  function signIn() {
+    var v = $('#pin').value.trim(); if (!v) return; pin = v; try { localStorage.setItem('dc_pin', pin); } catch (e) {}
+    say('Checking...');
+    fetch(API + (API.indexOf('?') > -1 ? '&' : '?') + 'action=state&pin=' + encodeURIComponent(pin) + '&t=' + Date.now()).then(function (r) { return r.json(); }).then(function (r) {
+      adopt(r); $('#pin').value = ''; say(authed ? '' : 'That PIN did not match.'); renderAll(); if (authed) { location.hash = 'checkin'; showTab('checkin'); }
+    }).catch(function () { say('Could not reach the board. Try again.'); });
+  }
+  $('#pinbtn').addEventListener('click', signIn);
+  $('#pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') signIn(); });
+
+  // ---------- start ----------
+  $('#when').textContent = ((window.BOARD_CONFIG && BOARD_CONFIG.when) || '') + ((window.BOARD_CONFIG && BOARD_CONFIG.place) ? ' | ' + BOARD_CONFIG.place : '');
+  if (DEMO) { var st0 = demoLoad(); players = st0.players; cfg = st0.cfg; loaded = true; showTab(location.hash.slice(1)); renderAll(); return; }
+  showTab(location.hash.slice(1) || 'lanes'); say('Loading the list...'); renderAll();
+  poll();
+  setTimeout(function () { if (!loaded) { loadFailed = true; say(''); renderAll(); } }, 12000);
+})();
+</script>
+</body>
+</html>
