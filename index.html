@@ -306,7 +306,7 @@ var Logic = (function () {
   var $ = function (s) { return document.querySelector(s); };
   var qs = new URLSearchParams(location.search);
   var API = qs.get('api') || (window.BOARD_CONFIG && BOARD_CONFIG.api) || '';
-  var DEMO = !API;
+  var DEMO = !API || qs.get('demo') === '1';
   var DEMO_PREVIEW = qs.get('demo') === '1';
   var DEMO_KEY = DEMO_PREVIEW ? 'dc_demo_preview' : 'dc_demo';
   var pin = ''; try { pin = localStorage.getItem('dc_pin') || ''; } catch (e) {}
